@@ -24,20 +24,27 @@ def generate_email(prompt):
     )
     return response.choices[0].message.content.strip()
 
-# Generate multiple concise email responses to email (no lists or bullet points)
+# Generate multiple varied and distinct responses to an email (separate API calls for each tone)
 def generate_response(email_content, quick=True):
-    length = "short" if quick else "long"
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": f"Generate {length}, distinct, concise email responses (1-2 sentences each) to the following email: {email_content}. Each response should be a single email-like reply, without bullet points or lists, and should be a full sentence or two."}
-        ],
-        n=4  # Generate four distinct responses
-    )
-    # Ensure responses are returned as distinct email-like responses
-    return [choice.message['content'].strip() for choice in response['choices']]
-
-
+    tones = [
+        "enthusiastic/optimistic",
+        "neutral",
+        "hesitant/pessemistic",
+        "asking for more time or clarification"
+    ]
+    
+    responses = []
+    for tone in tones:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": f"Generate a {tone} email response to the following email: {email_content}. The response should be short and to the point. There is no need for the email format, but make sure to use complete sentences. Appropriately respond to what is being asked in the email."}
+            ]
+        )
+        # Collect each response individually
+        responses.append(response.choices[0].message['content'].strip())
+    
+    return responses  # Return the list of distinct responses
 
 
 
@@ -99,10 +106,21 @@ def generate_full_response_from_reply(reply):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": f"Expand this reply into a full email response: {reply}"}
+            {"role": "user", "content": f"Expand this reply into a full email response: {reply}. The goal of this should be to provide a complete email response; but, do not make the response too long... get to the point"}
         ]
     )
     return response.choices[0].message.content.strip()
+
+# Generate a custom response to an email based on user input
+def generate_custom_response(email_content, custom_prompt):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": f"Respond to the following email: {email_content} based on the following instructions: {custom_prompt}. Ensure the response is relevant to the email content."}
+        ]
+    )
+    return response.choices[0].message['content'].strip()
+
 
 
 
